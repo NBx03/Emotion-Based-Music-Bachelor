@@ -1,0 +1,32 @@
+.header {
+    background: linear-gradient(90deg, #512da8, #673ab7);
+    color: #fff;
+    padding: 20px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+  
+  .logo {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #ffca28;
+  }
+  
+  .header-nav {
+    display: flex;
+    gap: 25px;
+  }
+  
+  .nav-item {
+    font-size: 1.1rem;
+    color: #fff;
+    transition: color 0.3s;
+  }
+  
+  .nav-item:hover,
+  .nav-item.active {
+    color: #ffeb3b;
+  }
+  

@@ -1,0 +1,19 @@
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #388e3c;
+    color: #fff;
+    padding: 15px 25px;
+    border-radius: 4px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+    z-index: 1000;
+    font-weight: 500;
+    animation: slideIn 0.5s ease-out;
+  }
+  
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
