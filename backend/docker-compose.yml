@@ -1,0 +1,28 @@
+services:
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "0.0.0.0:5432:5432"
+
+  backend:
+    build: .
+    environment:
+      DATABASE_URL: "postgresql://postgres:postgres@db:5432/postgres"
+      SUNO_TOKEN: "d79b625c9afddded7e8bbaf2e99ed05a"
+    ports:
+      - "0.0.0.0:8080:8080"
+    depends_on:
+      - db
+    volumes:
+      - .:/app  # монтируем локальную директорию с кодом в /app контейнера
+      - "D:/EmoSet:/data/EmoSet"
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--reload"]  
+
+volumes:
+  pgdata:
