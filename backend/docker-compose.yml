@@ -14,7 +14,7 @@ services:
     build: .
     environment:
       DATABASE_URL: "postgresql://postgres:postgres@db:5432/postgres"
-      SUNO_TOKEN: "d79b625c9afddded7e8bbaf2e99ed05a"
+      SUNO_TOKEN: "${SUNO_TOKEN:?SUNO_TOKEN is not set}"
     ports:
       - "0.0.0.0:8080:8080"
     depends_on:

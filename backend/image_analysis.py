@@ -4,14 +4,14 @@ from image_processing import load_dataset, calculate_centroids, determine_emotio
 
 EMOSET_CENTROIDS = None
 
+EMOSET_IMAGE_PATH = os.environ.get("EMOSET_IMAGE_PATH", "D:/EmoSet/image")
+EMOSET_ANNOTATION_PATH = os.environ.get("EMOSET_ANNOTATION_PATH", "D:/EmoSet/annotation")
+
 def load_emoset():
     global EMOSET_CENTROIDS
     if EMOSET_CENTROIDS is None:
-        # Пути изменены для контейнера (смонтированная папка с датасетом)
-        dataset_image_path = "D:/EmoSet/image"
-        dataset_annotation_path = "D:/EmoSet/annotation"
         max_images_per_emotion = 100
-        dataset = load_dataset(dataset_image_path, dataset_annotation_path, max_images_per_emotion)
+        dataset = load_dataset(EMOSET_IMAGE_PATH, EMOSET_ANNOTATION_PATH, max_images_per_emotion)
         EMOSET_CENTROIDS = calculate_centroids(dataset)
     return EMOSET_CENTROIDS
 

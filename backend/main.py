@@ -28,8 +28,13 @@ app.add_middleware(
 )
 
 SUNO_API_URL = "https://apibox.erweima.ai/api/v1/generate"  # Если у вас Suno API внешний, оставьте как было
-# Здесь SUNO_TOKEN можно оставить, если он используется для вызова внешнего API.
-SUNO_TOKEN = os.environ.get("SUNO_TOKEN", "d79b625c9afddded7e8bbaf2e99ed05a")
+
+SUNO_TOKEN = os.environ.get("SUNO_TOKEN")
+if not SUNO_TOKEN:
+    raise RuntimeError(
+        "Переменная окружения SUNO_TOKEN не задана. "
+        "Укажите её (см. backend/.env.example) перед запуском сервера."
+    )
 
 def get_db():
     db = SessionLocal()
