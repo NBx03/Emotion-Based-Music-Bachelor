@@ -1,4 +1,5 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException, Form, Request, Depends
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 import uuid
 import requests
@@ -8,17 +9,15 @@ import os
 from database import SessionLocal, engine
 import db_models
 from db_models import MusicRequest
+from image_analysis import analyze_image
+from text_generation import generate_concise_music_prompt_from_analysis
 
 # Создаем таблицы, если их ещё нет
 db_models.Base.metadata.create_all(bind=engine)
 
-from image_analysis import analyze_image
-from text_generation import generate_concise_music_prompt_from_analysis
-
 app = FastAPI()
 
 # Добавляем CORS (при необходимости)
-from fastapi.middleware.cors import CORSMiddleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # можно указать конкретные адреса

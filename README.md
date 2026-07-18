@@ -1,5 +1,7 @@
 # Emotion Music Generator (Дипломный проект)
 
+[![backend-ci](https://github.com/NBx03/Emotion-Based-Music-Bachelor/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/NBx03/Emotion-Based-Music-Bachelor/actions/workflows/backend-ci.yml)
+
 Веб-сервис для генерации персональных мелодий на основе анализа эмоционального содержания изображений.  
 Проект состоит из **бэкенда** (Python + FastAPI + TensorFlow/CLIP + SunoAI API) и **фронтенда** (React.js).
 
@@ -31,8 +33,8 @@
 
 ### 1. Клонирование репозитория
 ```bash
-git clone https://github.com/username/emotion-music-generator-thesis.git
-cd emotion-music-generator-thesis
+git clone https://github.com/NBx03/Emotion-Based-Music-Bachelor.git
+cd Emotion-Based-Music-Bachelor
 ````
 
 ### 2. Запуск бэкенда
@@ -108,6 +110,22 @@ npm start
 export SUNO_TOKEN="your_suno_api_key"
 docker-compose up --build
 ```
+
+---
+
+## ✅ Тесты
+
+```bash
+cd backend
+pip install -r requirements-test.txt   # лёгкий набор, без torch/transformers/face_recognition
+pytest tests/ -v
+```
+
+Smoke-тест на `POST /api/upload` подменяет `image_analysis.analyze_image`
+до импорта `main.py`, поэтому не требует установки тяжёлых ML-зависимостей
+и не делает реальных вызовов CLIP/YOLO/face_recognition. Прогоняется в CI
+на каждый push/PR, затрагивающий `backend/` (см.
+[.github/workflows/backend-ci.yml](.github/workflows/backend-ci.yml)).
 
 ---
 

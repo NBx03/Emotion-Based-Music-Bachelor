@@ -1,12 +1,11 @@
-import os, json
+import os
+import json
 from PIL import Image, ImageStat
 import numpy as np
 import torch
-import torchvision.transforms as transforms
 from transformers import CLIPProcessor, CLIPModel
 import face_recognition
 import requests
-import pandas as pd
 
 session = requests.Session()
 session.verify = False

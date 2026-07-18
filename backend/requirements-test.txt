@@ -1,0 +1,15 @@
+# Lightweight dependency set for running the test suite in CI.
+#
+# backend/tests/conftest.py stubs out image_analysis (and therefore the
+# torch/transformers/face_recognition/opencv/ultralytics import chain
+# pulled in by image_processing.py) before main.py is imported, so the
+# smoke test suite doesn't need those heavy ML dependencies installed at
+# all. For a full local dev environment, use requirements-dev.txt instead.
+fastapi==0.115.0
+uvicorn==0.30.6
+sqlalchemy==2.0.31
+requests==2.32.5
+python-multipart==0.0.9
+pytest==8.4.2
+httpx==0.28.1
+ruff==0.6.5

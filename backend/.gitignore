@@ -27,3 +27,6 @@ __pycache__/
 # Загруженные пользователем изображения и локальная БД (runtime-данные)
 uploads/
 app.db
+
+# Игнорируем кэш pytest
+.pytest_cache/
