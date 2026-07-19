@@ -2,7 +2,6 @@ from fastapi import FastAPI, UploadFile, File, HTTPException, Form, Request, Dep
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 import uuid
-import requests
 from sqlalchemy.orm import Session
 import os
 
@@ -11,6 +10,7 @@ import db_models
 from db_models import MusicRequest
 from image_analysis import analyze_image
 from text_generation import generate_concise_music_prompt_from_analysis
+from music_providers import get_music_provider, MusicGenerationError
 
 # Создаем таблицы, если их ещё нет
 db_models.Base.metadata.create_all(bind=engine)
@@ -26,43 +26,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-SUNO_API_URL = "https://apibox.erweima.ai/api/v1/generate"  # Если у вас Suno API внешний, оставьте как было
-
-SUNO_TOKEN = os.environ.get("SUNO_TOKEN")
-if not SUNO_TOKEN:
-    raise RuntimeError(
-        "Переменная окружения SUNO_TOKEN не задана. "
-        "Укажите её (см. backend/.env.example) перед запуском сервера."
-    )
-
 def get_db():
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
-
-def generate_music_with_suno(prompt: str, style: str, title: str, instrumental: bool, negative_tags: str) -> dict:
-    payload = {
-        "prompt": prompt,
-        "style": style,
-        "title": title,
-        "customMode": True,
-        "instrumental": instrumental,
-        "model": "V3_5",
-        "negativeTags": negative_tags,
-        # Для публичного доступа используйте внешний адрес, например через ngrok
-        "callBackUrl": "https://flamingo-key-owl.ngrok-free.app/api/webhook"
-    }
-    headers = {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        "Authorization": f"Bearer {SUNO_TOKEN}"
-    }
-    resp = requests.post(SUNO_API_URL, json=payload, headers=headers)
-    if resp.status_code == 200:
-        return resp.json()
-    raise Exception("Error generating music from Suno API")
 
 @app.post("/api/upload")
 async def upload_image(file: UploadFile = File(...), db: Session = Depends(get_db)):
@@ -133,17 +102,19 @@ async def generate_music(
     db.commit()
     db.refresh(req)
 
-    # Вызываем Suno API
-    suno_response = generate_music_with_suno(req.prompt, style, title, instrumental, negative_tags)
+    # Провайдер выбирается через MUSIC_PROVIDER в .env (см. music_providers.py)
+    try:
+        provider = get_music_provider()
+        result = provider.generate(req.prompt, style, title, instrumental, negative_tags)
+    except (RuntimeError, MusicGenerationError) as e:
+        raise HTTPException(status_code=502, detail=str(e))
 
-    # Сохраняем taskId (именно в этом поле Suno отдаёт taskId)
-    task_id = suno_response.get("data", {}).get("taskId")
-    if task_id:
-        req.suno_task_id = task_id
+    if result.get("task_id"):
+        req.suno_task_id = result["task_id"]
         db.commit()
         db.refresh(req)
 
-    return JSONResponse(suno_response)
+    return JSONResponse(result["raw"])
 
 @app.get("/api/queries")
 def get_queries(db: Session = Depends(get_db)):
@@ -210,8 +181,14 @@ def get_analytics(db: Session = Depends(get_db)):
 @app.post("/api/webhook")
 async def webhook_handler(request: Request, db: Session = Depends(get_db)):
     payload = await request.json()
-    data = payload.get("data", {})
-    task_id = data.get("task_id")
+
+    try:
+        provider = get_music_provider()
+    except RuntimeError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    normalized = provider.normalize_webhook_payload(payload)
+
+    task_id = normalized.get("task_id")
     if not task_id:
         raise HTTPException(status_code=400, detail="No task_id in webhook data")
 
@@ -220,7 +197,7 @@ async def webhook_handler(request: Request, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Request not found for this task_id")
 
     # Сохраняем массив сгенерированных треков
-    req.music_details = data.get("data")
+    req.music_details = normalized.get("tracks")
     req.status = "music_generated"
     db.commit()
     db.refresh(req)

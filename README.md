@@ -55,17 +55,31 @@ venv\Scripts\activate      # для Windows
 pip install -r requirements.txt
 ```
 
-Скопируйте файл с переменными окружения и заполните `SUNO_TOKEN`:
+Скопируйте файл с переменными окружения:
 
 ```bash
 cp .env.example .env
-# затем откройте .env и укажите свой SUNO_TOKEN
 ```
 
-- `SUNO_TOKEN` — **обязателен**, сервер не запустится без него (API-ключ SunoAI).
 - `DATABASE_URL` — опционален. Если не задан, backend по умолчанию использует
   локальный SQLite-файл `app.db` в папке `backend/`. Postgres подключается
   явно, например `postgresql://postgres:postgres@localhost:5432/postgres`.
+- `MUSIC_PROVIDER` — какой сервис генерации музыки использовать: `musicapi`
+  (по умолчанию, [musicapi.ai](https://docs.musicapi.ai/)) или `sunoapi_box`
+  ([api.box](https://docs.api.box/suno-api/quickstart)). Оба — неофициальные
+  Suno-реселлеры со схожим API; переключение — это просто смена значения
+  `MUSIC_PROVIDER` в `.env`, код трогать не нужно (см.
+  [backend/music_providers.py](backend/music_providers.py), паттерн Strategy).
+- Токен нужен только для выбранного провайдера: `MUSICAPI_TOKEN` для
+  `musicapi`, `SUNO_TOKEN` для `sunoapi_box`. `/api/upload` (анализ фото)
+  работает и без него — токен проверяется только при вызове
+  `/api/generate-music`.
+
+Проверить токен и баланс кредитов musicapi.ai отдельно от backend'а:
+```bash
+python scripts/test_musicapi.py --skip-generate   # бесплатно, только баланс
+python scripts/test_musicapi.py                   # + одна тестовая генерация
+```
 
 Запустите сервер:
 
