@@ -118,6 +118,37 @@ async def generate_music(
 
     return JSONResponse(result["raw"])
 
+@app.post("/api/queries/{request_id}/refresh")
+def refresh_music_status(request_id: str, db: Session = Depends(get_db)):
+    """
+    Опрашивает провайдера напрямую по task_id и обновляет статус/треки.
+    Нужен как альтернатива вебхуку (/api/webhook), для которого нужен
+    публично доступный callBackUrl (например, через ngrok) - без него
+    генерация может завершиться, а приложение об этом не узнает.
+    """
+    req = db.query(MusicRequest).filter(MusicRequest.id == request_id).first()
+    if not req:
+        raise HTTPException(status_code=404, detail="Request not found")
+    if not req.suno_task_id:
+        raise HTTPException(status_code=400, detail="У этого запроса ещё нет task_id - сначала запросите генерацию")
+
+    try:
+        provider = get_music_provider()
+        result = provider.get_status(req.suno_task_id)
+    except (RuntimeError, MusicGenerationError) as e:
+        raise HTTPException(status_code=502, detail=str(e))
+
+    state = result.get("state")
+    if state == "succeeded" and result.get("tracks"):
+        req.music_details = result["tracks"]
+        req.status = "music_generated"
+    elif state in ("failed", "error"):
+        req.status = "music_failed"
+    db.commit()
+    db.refresh(req)
+
+    return JSONResponse({"status": req.status, "state": state, "music_details": req.music_details})
+
 @app.get("/api/queries")
 def get_queries(db: Session = Depends(get_db)):
     requests_list = db.query(MusicRequest).order_by(MusicRequest.created_at.desc()).all()

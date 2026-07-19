@@ -10,7 +10,12 @@
 Примеры:
     python scripts/test_musicapi.py --token a7fc13bfc2...
     MUSICAPI_TOKEN=a7fc13bfc2... python scripts/test_musicapi.py
-    python scripts/test_musicapi.py --skip-generate   # только проверить баланс
+    python scripts/test_musicapi.py --skip-generate           # только проверить баланс
+    python scripts/test_musicapi.py --check-task <task_id>    # достать результат уже
+                                                                # запущенной задачи (например,
+                                                                # если предыдущий запуск скрипта
+                                                                # не дождался - генерация может
+                                                                # занимать больше 3 минут)
 """
 import argparse
 import os
@@ -55,21 +60,40 @@ def start_generation(token: str, description: str, model: str) -> dict:
     return resp.json()
 
 
+def get_task(token: str, task_id: str) -> dict:
+    resp = requests.get(
+        f"{BASE_URL}/api/v1/sonic/task/{task_id}",
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=15,
+    )
+    resp.raise_for_status()
+    return resp.json()
+
+
 def poll_status(token: str, task_id: str, max_wait: int, interval: int) -> Optional[dict]:
-    url = f"{BASE_URL}/api/v1/sonic/task/{task_id}"
     waited = 0
     while waited <= max_wait:
-        resp = requests.get(url, headers={"Authorization": f"Bearer {token}"}, timeout=15)
-        resp.raise_for_status()
-        data = resp.json()
+        data = get_task(token, task_id)
         state = data.get("state") or data.get("status")
         print(f"  [{waited}s] state={state}")
         if state in ("succeeded", "failed", "error"):
             return data
         time.sleep(interval)
         waited += interval
-    print("Таймаут ожидания - можно допросить статус позже вручную по этому task_id.")
+    print("Таймаут ожидания - генерация может занимать дольше. Проверь результат позже:")
+    print(f"  python scripts/test_musicapi.py --check-task {task_id}")
     return None
+
+
+def print_result(data: dict) -> None:
+    print("\nОтвет:", data)
+    tracks = data.get("data") or []
+    if tracks:
+        print("\nГотовые треки:")
+        for t in tracks:
+            print(f"  - {t.get('title')}: {t.get('audio_url')}")
+    else:
+        print("В ответе нет треков - смотри поле state/status выше.")
 
 
 def main():
@@ -82,13 +106,24 @@ def main():
         help="Описание сцены/настроения для генерации",
     )
     parser.add_argument("--skip-generate", action="store_true", help="Только проверить баланс кредитов")
-    parser.add_argument("--max-wait", type=int, default=180, help="Макс. время ожидания опроса статуса, сек")
+    parser.add_argument("--check-task", metavar="TASK_ID", help="Только проверить результат уже существующей задачи")
+    parser.add_argument("--max-wait", type=int, default=600, help="Макс. время ожидания опроса статуса, сек")
     parser.add_argument("--interval", type=int, default=15, help="Интервал опроса статуса, сек")
     args = parser.parse_args()
 
     if not args.token:
         print("Нужен токен: --token ... или переменная окружения MUSICAPI_TOKEN")
         sys.exit(1)
+
+    if args.check_task:
+        print(f"Проверяю результат task_id={args.check_task}...")
+        try:
+            print_result(get_task(args.token, args.check_task))
+        except requests.HTTPError as e:
+            body = e.response.text if e.response is not None else ""
+            print(f"Не удалось получить статус: {e}\n{body}")
+            sys.exit(1)
+        return
 
     print("Проверяю баланс кредитов (бесплатно)...")
     try:
@@ -119,17 +154,8 @@ def main():
 
     print(f"\ntask_id={task_id}. Опрашиваю статус каждые {args.interval} сек (максимум {args.max_wait} сек)...")
     final = poll_status(args.token, task_id, args.max_wait, args.interval)
-    if not final:
-        return
-
-    print("\nФинальный ответ:", final)
-    tracks = final.get("data") or []
-    if tracks:
-        print("\nГотовые треки:")
-        for t in tracks:
-            print(f"  - {t.get('title')}: {t.get('audio_url')}")
-    else:
-        print("В финальном ответе нет треков - смотри поле state/status выше.")
+    if final:
+        print_result(final)
 
 
 if __name__ == "__main__":
