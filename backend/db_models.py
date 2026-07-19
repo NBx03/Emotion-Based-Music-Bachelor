@@ -15,3 +15,4 @@ class MusicRequest(Base):
     status = Column(String, default="uploaded")  # uploaded, music_requested, music_generated, etc.
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     image_path = Column(String, nullable=True)  # Сохраняем путь к изображению
+    analysis_result = Column(JSON, nullable=True)  # emotion/brightness/colorfulness/face_count/objects из /api/upload

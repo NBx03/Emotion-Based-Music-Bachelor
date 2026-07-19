@@ -67,7 +67,8 @@ async def upload_image(file: UploadFile = File(...), db: Session = Depends(get_d
             style="",
             title="",
             instrumental=True,
-            negative_tags=""
+            negative_tags="",
+            analysis_result=analysis_result
         )
         db.add(new_request)
         db.commit()
@@ -149,33 +150,8 @@ def refresh_music_status(request_id: str, db: Session = Depends(get_db)):
 
     return JSONResponse({"status": req.status, "state": state, "music_details": req.music_details})
 
-@app.get("/api/queries")
-def get_queries(db: Session = Depends(get_db)):
-    requests_list = db.query(MusicRequest).order_by(MusicRequest.created_at.desc()).all()
-    # Чтобы избежать проблем с сериализацией, не возвращаем поле image_path raw (оно передается как строка)
-    results = []
-    for req in requests_list:
-        results.append({
-            "id": req.id,
-            "prompt": req.prompt,
-            "style": req.style,
-            "title": req.title,
-            "instrumental": req.instrumental,
-            "negative_tags": req.negative_tags,
-            "suno_task_id": req.suno_task_id,
-            "music_details": req.music_details,
-            "status": req.status,
-            "created_at": req.created_at.isoformat(),
-            "image_path": req.image_path  # Можно использовать для формирования URL на фронте
-        })
-    return JSONResponse(results)
-
-@app.get("/api/queries/{request_id}")
-def get_query_details(request_id: str, db: Session = Depends(get_db)):
-    req = db.query(MusicRequest).filter(MusicRequest.id == request_id).first()
-    if not req:
-        raise HTTPException(status_code=404, detail="Request not found")
-    result = {
+def _serialize_request(req: MusicRequest) -> dict:
+    return {
         "id": req.id,
         "prompt": req.prompt,
         "style": req.style,
@@ -186,9 +162,32 @@ def get_query_details(request_id: str, db: Session = Depends(get_db)):
         "music_details": req.music_details,
         "status": req.status,
         "created_at": req.created_at.isoformat(),
-        "image_path": req.image_path
+        "image_path": req.image_path,  # Можно использовать для формирования URL на фронте
+        "analysis_result": req.analysis_result,
     }
-    return JSONResponse(result)
+
+@app.get("/api/queries")
+def get_queries(db: Session = Depends(get_db)):
+    requests_list = db.query(MusicRequest).order_by(MusicRequest.created_at.desc()).all()
+    return JSONResponse([_serialize_request(req) for req in requests_list])
+
+@app.get("/api/queries/{request_id}")
+def get_query_details(request_id: str, db: Session = Depends(get_db)):
+    req = db.query(MusicRequest).filter(MusicRequest.id == request_id).first()
+    if not req:
+        raise HTTPException(status_code=404, detail="Request not found")
+    return JSONResponse(_serialize_request(req))
+
+@app.delete("/api/queries/{request_id}")
+def delete_query(request_id: str, db: Session = Depends(get_db)):
+    req = db.query(MusicRequest).filter(MusicRequest.id == request_id).first()
+    if not req:
+        raise HTTPException(status_code=404, detail="Request not found")
+    if req.image_path and os.path.exists(req.image_path):
+        os.remove(req.image_path)
+    db.delete(req)
+    db.commit()
+    return JSONResponse({"status": "deleted"})
 
 @app.get("/api/image/{request_id}")
 def get_image(request_id: str, db: Session = Depends(get_db)):
