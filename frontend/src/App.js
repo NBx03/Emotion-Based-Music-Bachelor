@@ -21,7 +21,7 @@ function App() {
         <main className="app-main">
           <Routes>
             <Route path="/" element={<History />} />
-            <Route path="/generate" element={<GenerateMusic setNotification={setNotification} />} />
+            <Route path="/generate" element={<GenerateMusic />} />
             <Route path="/history" element={<History />} />
             <Route path="/details/:id" element={<Details />} />
             <Route path="/analytics" element={<Analytics />} />

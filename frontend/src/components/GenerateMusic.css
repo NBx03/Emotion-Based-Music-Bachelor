@@ -62,4 +62,33 @@
     border-radius: 6px;
     margin-bottom: 20px;
   }
-  
+
+  .style-suggestions {
+    margin-top: 8px;
+  }
+
+  .style-suggestions-label {
+    display: block;
+    color: #777;
+    font-size: 0.85rem;
+    margin-bottom: 6px;
+  }
+
+  .form-container button.style-chip {
+    width: auto;
+    display: inline-block;
+    margin: 0 6px 6px 0;
+    padding: 4px 12px;
+    background-color: #ede7f6;
+    color: #512da8;
+    border: 1px solid #d1c4e9;
+    border-radius: 14px;
+    font-size: 0.85rem;
+    font-weight: 400;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .form-container button.style-chip:hover {
+    background-color: #d1c4e9;
+  }

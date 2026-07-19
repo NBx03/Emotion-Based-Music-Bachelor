@@ -19,6 +19,17 @@ function History() {
       .catch(err => console.error(err));
   }, []);
 
+  const handleDelete = async (id) => {
+    if (!window.confirm('Удалить этот запрос?')) return;
+    try {
+      await axios.delete(`http://localhost:8080/api/queries/${id}`);
+      setRequests(prev => prev.filter(r => r.id !== id));
+    } catch (err) {
+      console.error(err);
+      alert('Не удалось удалить запрос');
+    }
+  };
+
   return (
     <div className="history-container">
       <h2>История запросов</h2>
@@ -37,6 +48,9 @@ function History() {
               <Link to={`/details/${req.id}`} className="details-button">
                 Смотреть детали
               </Link>
+              <button className="history-delete-button" onClick={() => handleDelete(req.id)}>
+                Удалить
+              </button>
             </div>
           </li>
         ))}

@@ -1,0 +1,86 @@
+.analysis-panel {
+  background-color: #f9f9f9;
+  padding: 15px 20px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+
+.analysis-panel h3 {
+  margin-top: 0;
+  color: #3f51b5;
+  font-size: 1.1rem;
+}
+
+.analysis-emotion {
+  margin-bottom: 12px;
+  font-size: 1rem;
+}
+
+.analysis-emotion-label {
+  color: #555;
+}
+
+.analysis-emotion-value {
+  font-weight: 600;
+  color: #512da8;
+}
+
+.analysis-bar-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.analysis-bar-label {
+  flex: 0 0 160px;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.analysis-bar-container {
+  flex: 1;
+  height: 14px;
+  background: #e0e0e0;
+  border-radius: 7px;
+  overflow: hidden;
+  margin: 0 10px;
+}
+
+.analysis-bar-fill {
+  height: 100%;
+  background-color: #512da8;
+}
+
+.analysis-bar-percentage {
+  flex: 0 0 45px;
+  font-size: 0.9rem;
+  color: #555;
+  text-align: right;
+}
+
+.analysis-faces {
+  margin-bottom: 10px;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.analysis-objects strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.analysis-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.analysis-chip {
+  background-color: #ede7f6;
+  color: #512da8;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+}

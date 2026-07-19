@@ -70,4 +70,20 @@
   .details-button:hover {
     background-color: #4527a0;
   }
-  
+
+  .history-delete-button {
+    display: block;
+    width: 100%;
+    margin-top: 8px;
+    padding: 8px;
+    background-color: #fff;
+    color: #c62828;
+    border: 1px solid #c62828;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .history-delete-button:hover {
+    background-color: #ffebee;
+  }

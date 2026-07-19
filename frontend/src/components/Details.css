@@ -56,4 +56,37 @@
     margin: 0 auto 20px;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  }  
+  }
+
+  .draft-notice {
+    background-color: #fff3e0;
+    color: #e65100;
+    padding: 10px 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-size: 0.95rem;
+  }
+
+  .polling-notice {
+    color: #777;
+    font-size: 0.85rem;
+    font-style: italic;
+  }
+
+  .delete-button {
+    display: block;
+    width: 100%;
+    margin-top: 25px;
+    padding: 10px;
+    background-color: #fff;
+    color: #c62828;
+    border: 1px solid #c62828;
+    border-radius: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .delete-button:hover {
+    background-color: #ffebee;
+  }
