@@ -137,24 +137,48 @@ class MusicApiProvider(MusicProvider):
             message += " - сервис сообщает, что запрос можно повторить позже (retriable)"
         return f"musicapi.ai: HTTP {resp.status_code}: {message}"
 
+    _SUCCESS_STATES = {"succeeded", "success"}
+    _FAILURE_STATES = {"failed", "error"}
+
     def _tracks_from(self, payload: dict):
         raw_tracks = payload.get("data") or []
-        return [
-            _track(t.get("clip_id") or t.get("id"), t.get("title"), t.get("audio_url"), t.get("duration"))
-            for t in raw_tracks
-        ]
+        tracks = []
+        for t in raw_tracks:
+            duration = t.get("duration")
+            try:
+                duration = float(duration) if duration is not None else None
+            except (TypeError, ValueError):
+                pass
+            tracks.append(_track(t.get("clip_id") or t.get("id"), t.get("title"), t.get("audio_url"), duration))
+        return tracks
+
+    def _overall_state(self, payload: dict) -> str:
+        # musicapi.ai's actual response (undocumented) puts "state" per-track inside the
+        # "data" array, not at the top level - despite what the docs say. Derive an overall
+        # state from the individual clips instead of trusting a top-level state/status field.
+        raw_tracks = payload.get("data") or []
+        if not raw_tracks:
+            return payload.get("state") or payload.get("status") or "unknown"
+        track_states = {(t.get("state") or t.get("status") or "").lower() for t in raw_tracks}
+        if track_states & self._SUCCESS_STATES:
+            return "succeeded"
+        if track_states and track_states <= self._FAILURE_STATES:
+            return "failed"
+        return "pending"
 
     def get_status(self, task_id):
         url = self.BASE_URL + self.STATUS_PATH.format(task_id=task_id)
         resp = requests.get(url, headers=self._headers(), timeout=30)
         resp.raise_for_status()
         payload = resp.json()
-        state = payload.get("state") or payload.get("status") or "unknown"
-        return {"state": state, "tracks": self._tracks_from(payload), "raw": payload}
+        return {"state": self._overall_state(payload), "tracks": self._tracks_from(payload), "raw": payload}
 
     def normalize_webhook_payload(self, payload):
-        state = payload.get("state") or payload.get("status") or "unknown"
-        return {"task_id": payload.get("task_id"), "state": state, "tracks": self._tracks_from(payload)}
+        return {
+            "task_id": payload.get("task_id"),
+            "state": self._overall_state(payload),
+            "tracks": self._tracks_from(payload),
+        }
 
     def get_credits(self) -> dict:
         resp = requests.get(self.BASE_URL + self.CREDITS_PATH, headers=self._headers(), timeout=15)
