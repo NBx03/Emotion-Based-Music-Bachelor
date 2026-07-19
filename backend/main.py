@@ -93,12 +93,11 @@ async def generate_music(
     if not req:
         raise HTTPException(status_code=404, detail="Request not found")
 
-    # Обновляем параметры генерации
+    # Обновляем параметры генерации (статус пока не трогаем - выставим по факту результата ниже)
     req.style = style
     req.title = title
     req.instrumental = instrumental
     req.negative_tags = negative_tags
-    req.status = "music_requested"
     db.commit()
     db.refresh(req)
 
@@ -107,12 +106,15 @@ async def generate_music(
         provider = get_music_provider()
         result = provider.generate(req.prompt, style, title, instrumental, negative_tags)
     except (RuntimeError, MusicGenerationError) as e:
+        req.status = "music_failed"
+        db.commit()
         raise HTTPException(status_code=502, detail=str(e))
 
+    req.status = "music_requested"
     if result.get("task_id"):
         req.suno_task_id = result["task_id"]
-        db.commit()
-        db.refresh(req)
+    db.commit()
+    db.refresh(req)
 
     return JSONResponse(result["raw"])
 

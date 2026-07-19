@@ -6,7 +6,8 @@ import './Details.css';
 const STATUS_LABELS = {
   uploaded: 'Загружено',
   music_requested: 'Запрос музыки отправлен',
-  music_generated: 'Музыка готова'
+  music_generated: 'Музыка готова',
+  music_failed: 'Ошибка генерации'
 };
 
 function Details() {
@@ -50,6 +51,8 @@ function Details() {
             </div>
           ))}
         </>
+      ) : req.status === 'music_failed' ? (
+        <p>Генерация не удалась. Попробуйте запросить музыку ещё раз.</p>
       ) : (
         <p>Музыка ещё генерируется...</p>
       )}

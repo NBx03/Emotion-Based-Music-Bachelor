@@ -39,7 +39,8 @@ function GenerateMusic({ setNotification }) {
       }, 5000);
     } catch (error) {
       console.error(error);
-      alert("Ошибка при генерации музыки");
+      const detail = error.response?.data?.detail;
+      alert(detail ? `Ошибка при генерации музыки: ${detail}` : "Ошибка при генерации музыки");
     }
   };
 

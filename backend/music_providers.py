@@ -122,9 +122,20 @@ class MusicApiProvider(MusicProvider):
         payload = {k: v for k, v in payload.items() if v not in (None, "")}
         resp = requests.post(self.BASE_URL + self.CREATE_PATH, json=payload, headers=self._headers(), timeout=30)
         if resp.status_code != 200:
-            raise MusicGenerationError(f"musicapi.ai: HTTP {resp.status_code}: {resp.text}")
+            raise MusicGenerationError(self._format_error(resp))
         data = resp.json()
         return {"task_id": data.get("task_id"), "raw": data}
+
+    @staticmethod
+    def _format_error(resp) -> str:
+        try:
+            body = resp.json()
+        except ValueError:
+            return f"musicapi.ai: HTTP {resp.status_code}: {resp.text}"
+        message = body.get("error") or body.get("message") or resp.text
+        if body.get("retriable"):
+            message += " - сервис сообщает, что запрос можно повторить позже (retriable)"
+        return f"musicapi.ai: HTTP {resp.status_code}: {message}"
 
     def _tracks_from(self, payload: dict):
         raw_tracks = payload.get("data") or []

@@ -6,7 +6,8 @@ import './History.css';
 const STATUS_LABELS = {
   uploaded: 'Загружено',
   music_requested: 'Запрос музыки отправлен',
-  music_generated: 'Музыка готова'
+  music_generated: 'Музыка готова',
+  music_failed: 'Ошибка генерации'
 };
 
 function History() {
